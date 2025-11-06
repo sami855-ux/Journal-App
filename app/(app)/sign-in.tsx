@@ -1,14 +1,27 @@
 import { useSignIn } from "@clerk/clerk-expo";
-import { Link, useRouter } from "expo-router";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useRouter } from "expo-router";
 import React from "react";
+import {
+  Button,
+  Card,
+  H2,
+  Paragraph,
+  YStack,
+  XStack,
+  Input,
+  Separator,
+  Spacer,
+} from "tamagui";
+import SignInWithGoogle from "../../components/SignInWithGoogle";
+import { useModal } from "../../context/ModalContext";
 
-export default function Page() {
+function SignInContent() {
   const { signIn, setActive, isLoaded } = useSignIn();
   const router = useRouter();
 
   const [emailAddress, setEmailAddress] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const { showModal } = useModal();
 
   // Handle the submission of the sign-in form
   const onSignInPress = async () => {
@@ -30,37 +43,83 @@ export default function Page() {
         // If the status isn't complete, check why. User might need to
         // complete further steps.
         console.error(JSON.stringify(signInAttempt, null, 2));
+        showModal({
+          type: "alert",
+          title: "Additional steps required",
+          description: "Please follow the next steps to finish signing in.",
+          confirmText: "OK",
+        });
       }
     } catch (err) {
       // See https://clerk.com/docs/custom-flows/error-handling
       // for more info on error handling
       console.error(JSON.stringify(err, null, 2));
+      showModal({
+        type: "alert",
+        title: "Sign in failed",
+        description: "Please check your email and password, then try again.",
+        confirmText: "OK",
+      });
     }
   };
 
   return (
-    <View>
-      <Text>Sign in</Text>
-      <TextInput
-        autoCapitalize="none"
-        value={emailAddress}
-        placeholder="Enter email"
-        onChangeText={(emailAddress) => setEmailAddress(emailAddress)}
-      />
-      <TextInput
-        value={password}
-        placeholder="Enter password"
-        secureTextEntry={true}
-        onChangeText={(password) => setPassword(password)}
-      />
-      <TouchableOpacity onPress={onSignInPress}>
-        <Text>Continue</Text>
-      </TouchableOpacity>
-      <View style={{ display: "flex", flexDirection: "row", gap: 3 }}>
-        <Link href="/sign-up">
-          <Text>Sign up</Text>
-        </Link>
-      </View>
-    </View>
+    <YStack
+      style={{
+        minHeight: "100%",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 24,
+      }}
+    >
+      <Card elevate bordered padding={20} width={360}>
+        <YStack gap="$4">
+          <YStack gap="$2" style={{ alignItems: "center" }}>
+            <H2>Welcome back</H2>
+            <Paragraph>Sign in to continue</Paragraph>
+          </YStack>
+
+          <YStack gap="$3">
+            <Input
+              autoCapitalize="none"
+              value={emailAddress}
+              placeholder="Email"
+              onChangeText={(val) => setEmailAddress(val)}
+            />
+            <Input
+              value={password}
+              placeholder="Password"
+              secureTextEntry
+              onChangeText={(val) => setPassword(val)}
+            />
+            <Button size="$4" onPress={onSignInPress}>
+              Continue
+            </Button>
+          </YStack>
+
+          <YStack gap="$3">
+            <XStack gap="$3" style={{ alignItems: "center" }}>
+              <Separator flex={1} />
+              <Paragraph>or</Paragraph>
+              <Separator flex={1} />
+            </XStack>
+            <SignInWithGoogle />
+          </YStack>
+
+          <Spacer size="$2" />
+
+          <XStack gap="$2" style={{ justifyContent: "center" }}>
+            <Paragraph>Don't have an account?</Paragraph>
+            <Button unstyled onPress={() => router.push("/")}>
+              <Paragraph fontWeight="600">Sign up</Paragraph>
+            </Button>
+          </XStack>
+        </YStack>
+      </Card>
+    </YStack>
   );
+}
+
+export default function Page() {
+  return <SignInContent />;
 }
